@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>MediAssist — Telangana Rural Clinic Directory</title>
+<style>
+  :root{
+    --teal:#1e7066;
+    --bg:#eef5f3;
+    --card:#ffffff;
+    --muted:#5b6b67;
+    --accent:#2b7a78;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    background:var(--bg);
+    color:#143533;
+  }
+  header{
+    background:linear-gradient(90deg,var(--teal),var(--accent));
+    color:white;
+    padding:20px 16px;
+    text-align:center;
+    font-size:22px;
+    font-weight:700;
+  }
+
+  .wrap{max-width:1100px;margin:18px auto;padding:0 14px 40px;}
+  .controls{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0 20px;align-items:center;}
+  .search{
+    flex:1 1 320px;
+    display:flex;
+    gap:8px;
+  }
+  input[type="search"]{
+    width:100%;
+    padding:12px 14px;
+    border-radius:8px;
+    border:2px solid rgba(0,0,0,0.07);
+    font-size:15px;
+  }
+  select{padding:12px;border-radius:8px;border:2px solid rgba(0,0,0,0.07);font-size:15px;}
+  button{padding:10px 14px;border-radius:8px;border:none;background:var(--teal);color:white;font-weight:600;cursor:pointer}
+  button.secondary{background:#6aa99a}
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:16px;
+  }
+  .card{
+    background:var(--card);
+    border-radius:12px;
+    padding:14px;
+    box-shadow:0 10px 24px rgba(14,40,37,0.06);
+    position:relative;
+    overflow:hidden;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .card:hover{transform:translateY(-6px); box-shadow:0 18px 36px rgba(14,40,37,0.09)}
+  .row{display:flex;gap:12px;align-items:center}
+  .avatar{
+    width:96px;height:96px;border-radius:12px;flex:0 0 96px;object-fit:cover;border:3px solid rgba(30,112,102,0.06);
+    background:#f6fbfa;
+  }
+  .meta h3{margin:0;font-size:18px}
+  .meta .spec{font-size:13px;color:var(--muted);margin-top:4px}
+  .timing{display:inline-block;margin-top:8px;padding:6px 10px;border-radius:999px;background:rgba(30,112,102,0.08);color:var(--teal);font-size:12px;font-weight:600}
+  .details{display:none;margin-top:12px;padding:10px;border-radius:10px;background:#e9f7f5;font-size:14px;line-height:1.5}
+  .chips{margin-top:10px}
+  .chip{display:inline-block;padding:6px 8px;border-radius:8px;margin-right:6px;margin-top:6px;background:#f1fbfa;border:1px solid rgba(30,112,102,0.06);font-size:12px;color:#0f4d47}
+  .clinic{margin-top:10px;font-size:14px}
+  .actions{position:absolute;right:12px;top:12px;font-size:12px;color:var(--muted)}
+  .noresults{padding:20px;text-align:center;color:var(--muted)}
+  footer{max-width:1100px;margin:20px auto 60px;padding:0 14px;color:var(--muted);font-size:14px}
+  @media (max-width:420px){ .avatar{width:72px;height:72px;flex:0 0 72px;border-radius:10px} }
+</style>
+</head>
+<body>
+<header>MediAssist — Rural Telangana Clinic Network</header>
+
+<main class="wrap">
+
+  <section class="controls" aria-label="Search and filter">
+    <div class="search" role="search">
+      <input id="q" type="search" placeholder="Search by disease, doctor name, specialty or clinic (e.g. 'fever', 'cardio', 'Ramesh')" oninput="filterDoctors()" aria-label="Search doctors">
+      <button onclick="clearSearch()" title="Clear search">Clear</button>
+    </div>
+
+    <label>
+      <select id="specialty" onchange="filterDoctors()" aria-label="Filter by specialty">
+        <option value="">All Specialties</option>
+        <option>General Physician</option>
+        <option>Pediatrician</option>
+        <option>Gynecologist</option>
+        <option>Cardiologist</option>
+        <option>Orthopedic</option>
+      </select>
+    </label>
+
+    <label>
+      <select id="availability" onchange="filterDoctors()" aria-label="Filter by availability">
+        <option value="">All Days</option>
+        <option>All Days</option>
+        <option>Monday – Saturday</option>
+        <option>Monday – Friday</option>
+        <option>Tuesday – Sunday</option>
+      </select>
+    </label>
+
+    <button class="secondary" onclick="showAll()">Show All</button>
+  </section>
+
+  <section id="doctors" class="grid" aria-live="polite">
+    <!-- Doctor cards: each card has data- attributes for search (name,specialty,services,clinic) -->
+    <article class="card" tabindex="0" role="button" onclick="toggle('d1',this)"
+             data-name="dr ramesh kumar"
+             data-specialty="General Physician"
+             data-services="fever cough cold bp diabetes basic emergency chronic"
+             data-clinic="Sri Vaidya Family Clinic"
+             data-availability="Monday – Saturday"
+             >
+      <div class="actions">Tap or press Enter</div>
+      <div class="row">
+        <img class="avatar" alt="Dr. Ramesh Kumar" src="https://img.freepik.com/premium-photo/portrait-doctor-smiling-clinic-looking-confident-happy_162944-5025.jpg">
+        <div class="meta">
+          <h3>Dr. Ramesh Kumar</h3>
+          <div class="spec">General Physician</div>
+          <div class="timing">9 AM – 1 PM • 4 PM – 7 PM</div>
+          <div class="chips">
+            <span class="chip">Fever</span>
+            <span class="chip">BP</span>
+            <span class="chip">Diabetes</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="details" id="d1" aria-hidden="true">
+        <div class="clinic"><strong>Clinic:</strong> Sri Vaidya Family Clinic, Nalgonda</div>
+        <div class="clinic"><strong>Mobile:</strong> <a href="tel:+916302188771">+91 63021 88771</a></div>
+        <div class="clinic"><strong>Availability:</strong> Monday – Saturday</div>
+        <div class="clinic"><strong>Services:</strong> General consultations, basic emergency care, chronic disease follow-up</div>
+        <div class="clinic"><strong>Languages:</strong> Telugu, Hindi</div>
+      </div>
+    </article>
+
+    <article class="card" tabindex="0" role="button" onclick="toggle('d2',this)"
+             data-name="dr srilatha"
+             data-specialty="Pediatrician"
+             data-services="child fever vaccination growth monitoring newborn immunization"
+             data-clinic="Little Stars Children Clinic"
+             data-availability="Monday – Friday"
+             >
+      <div class="actions">Tap or press Enter</div>
+      <div class="row">
+        <img class="avatar" alt="Dr. Srilatha" src="https://img.freepik.com/premium-photo/female-doctor-with-smiling-face-photo_935803-399.jpg">
+        <div class="meta">
+          <h3>Dr. Srilatha</h3>
+          <div class="spec">Pediatrician</div>
+          <div class="timing">10 AM – 12 PM</div>
+          <div class="chips">
+            <span class="chip">Vaccination</span>
+            <span class="chip">Child Growth</span>
+            <span class="chip">Newborn Care</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="details" id="d2" aria-hidden="true">
+        <div class="clinic"><strong>Clinic:</strong> Little Stars Children Clinic, Choutuppal</div>
+        <div class="clinic"><strong>Mobile:</strong> <a href="tel:+919391455228">+91 93914 55228</a></div>
+        <div class="clinic"><strong>Availability:</strong> Monday – Friday</div>
+        <div class="clinic"><strong>Services:</strong> Child wellness, immunizations, growth monitoring</div>
+        <div class="clinic"><strong>Languages:</strong> Telugu, English</div>
+      </div>
+    </article>
+
+    <article class="card" tabindex="0" role="button" onclick="toggle('d3',this)"
+             data-name="dr keerthi devi"
+             data-specialty="Gynecologist"
+             data-services="pregnancy antenatal pcod family planning women health"
+             data-clinic="Mother Care Women's Clinic"
+             data-availability="Tuesday – Sunday"
+             >
+      <div class="actions">Tap or press Enter</div>
+      <div class="row">
+        <img class="avatar" alt="Dr. Keerthi Devi" src="https://img.freepik.com/premium-photo/medical-concept-indian-beautiful-female-doctor-white-coat-with-stethoscope-waist-up-medical-st_967785-25318.jpg">
+        <div class="meta">
+          <h3>Dr. Keerthi Devi</h3>
+          <div class="spec">Gynecologist</div>
+          <div class="timing">11 AM – 3 PM</div>
+          <div class="chips">
+            <span class="chip">Antenatal</span>
+            <span class="chip">PCOD</span>
+            <span class="chip">Family Planning</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="details" id="d3" aria-hidden="true">
+        <div class="clinic"><strong>Clinic:</strong> Mother Care Women's Clinic, Narketpally</div>
+        <div class="clinic"><strong>Mobile:</strong> <a href="tel:+918187855211">+91 81878 55211</a></div>
+        <div class="clinic"><strong>Availability:</strong> Tuesday – Sunday</div>
+        <div class="clinic"><strong>Services:</strong> Antenatal care, family planning, women's health consultations</div>
+        <div class="clinic"><strong>Languages:</strong> Telugu, Hindi</div>
+      </div>
+    </article>
+
+    <article class="card" tabindex="0" role="button" onclick="toggle('d4',this)"
+             data-name="dr mahesh varma"
+             data-specialty="Cardiologist"
+             data-services="chest pain bp heart ecg cardiac cholesterol"
+             data-clinic="HeartCare Super Clinic"
+             data-availability="Monday – Saturday"
+             >
+      <div class="actions">Tap or press Enter</div>
+      <div class="row">
+        <img class="avatar" alt="Dr. Mahesh Varma" src="https://tse3.mm.bing.net/th/id/OIP.PYvTLzCad20GCmCQ-TkRmwHaE8?rs=1&pid=ImgDetMain&o=7&rm=3">
+        <div class="meta">
+          <h3>Dr. Mahesh Varma</h3>
+          <div class="spec">Cardiologist</div>
+          <div class="timing">2 PM – 6 PM</div>
+          <div class="chips">
+            <span class="chip">Chest Pain</span>
+            <span class="chip">ECG</span>
+            <span class="chip">BP</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="details" id="d4" aria-hidden="true">
+        <div class="clinic"><strong>Clinic:</strong> HeartCare Super Clinic, Nalgonda Town</div>
+        <div class="clinic"><strong>Mobile:</strong> <a href="tel:+919000822119">+91 90008 22119</a></div>
+        <div class="clinic"><strong>Availability:</strong> Monday – Saturday</div>
+        <div class="clinic"><strong>Services:</strong> Heart checkups, ECG, BP management, chest pain evaluation</div>
+        <div class="clinic"><strong>Languages:</strong> Telugu, English</div>
+      </div>
+    </article>
+
+    <article class="card" tabindex="0" role="button" onclick="toggle('d5',this)"
+             data-name="dr arun teja"
+             data-specialty="Orthopedic"
+             data-services="fractures back pain knee pain sprain joint pain physiotherapy"
+             data-clinic="OrthoWell Bone Clinic"
+             data-availability="All Days"
+             >
+      <div class="actions">Tap or press Enter</div>
+      <div class="row">
+        <img class="avatar" alt="Dr. Arun Teja" src="https://img.freepik.com/premium-photo/celebrating-national-world-doctors-day-ai-generated-image_1129938-82.jpg">
+        <div class="meta">
+          <h3>Dr. Arun Teja</h3>
+          <div class="spec">Orthopedic</div>
+          <div class="timing">6 PM – 9 PM</div>
+          <div class="chips">
+            <span class="chip">Fractures</span>
+            <span class="chip">Back Pain</span>
+            <span class="chip">Knee Pain</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="details" id="d5" aria-hidden="true">
+        <div class="clinic"><strong>Clinic:</strong> OrthoWell Bone Clinic, Ramannapet</div>
+        <div class="clinic"><strong>Mobile:</strong> <a href="tel:+919014198331">+91 90141 98331</a></div>
+        <div class="clinic"><strong>Availability:</strong> All Days</div>
+        <div class="clinic"><strong>Services:</strong> Fracture care, joint pain management, physiotherapy referrals</div>
+        <div class="clinic"><strong>Languages:</strong> Telugu, Hindi</div>
+      </div>
+    </article>
+
+  </section>
+
+  <div id="noResults" class="noresults" style="display:none">No doctors found for your search.</div>
+
+  <aside style="margin-top:20px;padding:14px;border-radius:12px;background:var(--card);box-shadow:0 10px 24px rgba(14,40,37,0.04)">
+    <h4 style="margin:0 0 8px 0">Central Clinic Contact</h4>
+    <div style="color:var(--muted);font-size:14px">
+      Rural Health Centre,<br>
+      Village — (near bus stand), Nalgonda District, Telangana<br>
+      <strong>Emergency Helpline:</strong> 108
+    </div>
+    <div style="margin-top:8px;font-size:13px;color:var(--muted)">
+      <small>To use real doctor photos: create an <code>images/</code> folder and replace the avatar src attributes with <code>images/doctor1.jpg</code>, etc.</small>
+    </div>
+  </aside>
+
+</main>
+
+<footer>
+  Site made for MediAssist — share this `index.html` in a GitHub repo and enable GitHub Pages to publish.
+</footer>
+
+<script>
+  // Keyboard accessible toggle (Enter/Space)
+  document.addEventListener('keydown', (e)=>{
+    if((e.key === 'Enter' || e.key === ' ') && document.activeElement && document.activeElement.classList.contains('card')) {
+      e.preventDefault();
+      document.activeElement.click();
+    }
+  });
+
+  function toggle(id, el){
+    // toggle one card detail
+    const box = document.getElementById(id);
+    const opened = box.style.display === 'block';
+    // close others (optional; keep single open)
+    document.querySelectorAll('.details').forEach(d=>{
+      if(d.id !== id){ d.style.display='none'; d.setAttribute('aria-hidden','true'); }
+    });
+    if(!opened){
+      box.style.display = 'block';
+      box.setAttribute('aria-hidden','false');
+      el.setAttribute('aria-expanded','true');
+      // scroll into view on small screens
+      setTimeout(()=> box.scrollIntoView({behavior:'smooth', block:'center'}), 60);
+    } else {
+      box.style.display = 'none';
+      box.setAttribute('aria-hidden','true');
+      el.setAttribute('aria-expanded','false');
+    }
+  }
+
+  // Filtering logic: uses data- attributes (faster & avoids innerText matches)
+  function filterDoctors(){
+    const q = (document.getElementById('q').value || '').trim().toLowerCase();
+    const specialty = (document.getElementById('specialty').value || '').trim().toLowerCase();
+    const availability = (document.getElementById('availability').value || '').trim().toLowerCase();
+    const cards = document.querySelectorAll('#doctors .card');
+    let anyVisible = false;
+
+    cards.forEach(card=>{
+      const name = (card.dataset.name || '').toLowerCase();
+      const spec = (card.dataset.specialty || '').toLowerCase();
+      const services = (card.dataset.services || '').toLowerCase();
+      const clinic = (card.dataset.clinic || '').toLowerCase();
+      const avail = (card.dataset.availability || '').toLowerCase();
+
+      // match search query across fields
+      const matchesQuery = !q || name.includes(q) || spec.includes(q) || services.includes(q) || clinic.includes(q);
+
+      // match specialty filter
+      const matchesSpec = !specialty || spec === specialty.toLowerCase();
+
+      // match availability filter (simple check if included)
+      const matchesAvail = !availability || avail === availability.toLowerCase() || availability === 'all days' && avail === 'all days';
+
+      if(matchesQuery && matchesSpec && matchesAvail){
+        card.style.display = '';
+        anyVisible = true;
+      } else {
+        card.style.display = 'none';
+        // also close details if hidden
+        const d = card.querySelector('.details');
+        if(d) d.style.display = 'none';
+      }
+    });
+
+    document.getElementById('noResults').style.display = anyVisible ? 'none' : '';
+  }
+
+  function clearSearch(){
+    document.getElementById('q').value = '';
+    document.getElementById('specialty').selectedIndex = 0;
+    document.getElementById('availability').selectedIndex = 0;
+    filterDoctors();
+  }
+
+  function showAll(){
+    document.getElementById('q').value = '';
+    document.getElementById('specialty').value = '';
+    document.getElementById('availability').value = '';
+    filterDoctors();
+  }
+
+  // initialize
+  filterDoctors();
+</script>
+</body>
+</html>
